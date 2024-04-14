@@ -75,7 +75,6 @@ class Game():
         print(f"{str(self.current_player)} goes first!")
         print(self)
 
-
     def _reset_board(self):
         board = [Position(i) for i in range(24)]
         board[0] = Position(0, self.players[0], 2)
@@ -86,9 +85,12 @@ class Game():
         board[16] = Position(16, self.players[0], 3)
         board[18] = Position(18, self.players[0], 5)
         board[23] = Position(23, self.players[1], 2)
+
+        # TODO: Add bar/goal to board (for easier board vecorization)
+
         return board
 
-    def play_turn(self):
+    def play_turn_manual(self):
         dice = self._roll_dice()
         possible_moves = self._get_possible_moves(self.current_player, dice)
 
@@ -161,6 +163,8 @@ class Game():
 
     def _roll_dice(self):
         dice = [random.randint(1,6) for _ in range(2)]
+        
+        # If doubles were rolled, add two copies of that number
         if dice[0] == dice[1]:
             dice.append(dice[0])
             dice.append(dice[0])
@@ -169,11 +173,14 @@ class Game():
     @staticmethod
     def possible_distances(dice):
         dists = set(dice[0])
+        # Only one dice to use
         if len(dice) < 2:
             return dists
+        # Both dice are avalible to use
         if len(dice) == 2:
             dists.add(dice[1])
             dists.add(dice[0] + dice[1])
+        # Doubles
         else:
             for v in range(2, len(dice) + 1):
                 dists.add(dice[0] * v)

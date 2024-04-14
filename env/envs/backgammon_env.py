@@ -1,8 +1,9 @@
 import configparser
-from colors import BLACK, WHITE, DARK_RED, LIGHT_GREEN, LIGHT_BROWN 
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
+from colors import BLACK, WHITE, DARK_RED, LIGHT_GREEN, LIGHT_BROWN 
+
 import pygame
 
 # Set constants
@@ -46,35 +47,36 @@ class BackgammonEnv(gym.Env):
         pygame.display.flip()
 
     def render_board(self):
-        board_width = SCREEN_WIDTH - 50
-        board_height = 2 * SCREEN_HEIGHT // 3
-        board_rect = pygame.Rect(25, 25, board_width, board_height)
-        pygame.draw.rect(self.screen, LIGHT_GREEN, board_rect)
+        board = pygame.image.load('env/envs/graphics/board.png')
+        self.screen.blit(board, (0,0))
+        # board_width = SCREEN_WIDTH - 50
+        # board_height = 2 * SCREEN_HEIGHT // 3
+        # board_rect = pygame.Rect(25, 25, board_width, board_height)
+        # pygame.draw.rect(self.screen, LIGHT_GREEN, board_rect)
 
-        # Draw traiangles
-        triangle_width = board_width // 16
-        triangle_height = board_height // 2 - 25
-        for i in range(6):
-            # Triangles on the left side
-            left_x = 25 + i * triangle_width
-            right_x = 25 + (i + 1) * triangle_width
-            color = DARK_RED if i % 2 == 0 else BLACK  # Alternate colors
+        # # Draw traiangles
+        # triangle_width = board_width // 16
+        # triangle_height = board_height // 2 - 25
+        # for i in range(6):
+        #     # Triangles on the left side
+        #     left_x = 25 + i * triangle_width
+        #     right_x = 25 + (i + 1) * triangle_width
+        #     color = DARK_RED if i % 2 == 0 else BLACK  # Alternate colors
             
-            # Top triangles
-            pygame.draw.polygon(self.screen, color, [(left_x, 25), (right_x, 25), (left_x + triangle_width // 2, triangle_height)])
-            # Bottom triangles
-            pygame.draw.polygon(self.screen, color, [(left_x, board_height + 25), (right_x, board_height + 25), (left_x + triangle_width // 2, board_height + 25 - triangle_height)])
+        #     # Top triangles
+        #     pygame.draw.polygon(self.screen, color, [(left_x, 25), (right_x, 25), (left_x + triangle_width // 2, triangle_height)])
+        #     # Bottom triangles
+        #     pygame.draw.polygon(self.screen, color, [(left_x, board_height + 25), (right_x, board_height + 25), (left_x + triangle_width // 2, board_height + 25 - triangle_height)])
             
-            # Triangles on the right side
-            left_x = board_width // 2 + i * triangle_width
-            right_x = board_width // 2 + (i + 1) * triangle_width
+        #     # Triangles on the right side
+        #     left_x = board_width // 2 + i * triangle_width
+        #     right_x = board_width // 2 + (i + 1) * triangle_width
             
-            # Top triangles
-            pygame.draw.polygon(self.screen, color, [(left_x, 25), (right_x, 25), (left_x + triangle_width // 2, triangle_height)])
-            # Bottom triangles
-            pygame.draw.polygon(self.screen, color, [(left_x, board_height + 25), (right_x, board_height + 25), (left_x + triangle_width // 2, board_height + 25 - triangle_height)])
-
-    def render_checkers(self):
+        #     # Top triangles
+        #     pygame.draw.polygon(self.screen, color, [(left_x, 25), (right_x, 25), (left_x + triangle_width // 2, triangle_height)])
+        #     print(f"Top: {}")
+        #     # Bottom triangles
+        #     pygame.draw.polygon(self.screen, color, [(left_x, board_height + 25), (right_x, board_height + 25), (left_x + triangle_width // 2, board_height + 25 - triangle_height)])
         
 #Test 
 test = BackgammonEnv()
