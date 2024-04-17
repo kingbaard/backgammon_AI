@@ -1,11 +1,7 @@
 class Player:
-    def __init__(self, id):
+    def __init__(self, id, bar_i):
         self.id = id
-        self.bar = 0
-        if id == 0:
-            self.bar_loc = -1
-        else:
-            self.bar_loc = 24
+        self.bar_i = bar_i
         self.goal = 0
         self.can_bear = False
 
