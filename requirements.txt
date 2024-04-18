@@ -1,0 +1,8 @@
+torch>=2.2.2
+gymnasium>=0.29.1
+numpy>=1.26.4
+pygame>=2.5.2
+matplotlib>=3.8.4
+tensordict>=0.3.2
+torchrl>=0.3.1
+tqdm

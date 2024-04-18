@@ -6,6 +6,13 @@ from colors import BLACK, WHITE, DARK_RED, LIGHT_GREEN, LIGHT_BROWN
 from game import Game
 import pygame
 
+from torchrl.envs.libs.gym import GymEnv
+from torchrl.envs.utils import check_env_specs, ExplorationType, set_exploration_type
+from torchrl.modules import ProbabilisticActor, TanhNormal, ValueOperator
+from torchrl.objectives import ClipPPOLoss
+from torchrl.objectives.value import GAE
+from tqdm import tqdm
+
 # Set constants
 config = configparser.ConfigParser()
 config.read('env/envs/config.ini')
@@ -17,10 +24,22 @@ class BackgammonEnv(gym.Env):
     """
     ## Description
 
+
     ## Action Space
     The action is a `ndarray` with shape `(2,)` which can take integer values from 0 to 25.
     The first element of the array correlates to the board position index of the piece origin.
     The second element of the array describes the destination position index
+
+    ## Observation Space
+    {
+    0: p1 bar (positive int)
+    1-24: number of checkers at each location. (p1 postivie, p2 negative)
+    25: p2 bar (negative int)
+    26: d value (int)
+    27: d value (int or None)
+    28: d value (int or None)
+    29  d value (int or None)
+    }
     """
     metadata = {"render_modes": ["human"], "render_fps": FPS}
 

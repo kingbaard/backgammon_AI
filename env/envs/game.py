@@ -5,7 +5,6 @@ from position import Position
 from player import Player
 
 class Game():
-
     def __init__(self):
         self.players = [Player(0, 25), Player(1, 0)] 
         self.current_player = None
@@ -72,16 +71,19 @@ class Game():
 
             return board_str
     
+
     def run_game(self):
         while True:
             self.prompt_move()
     
+
     def _start_game(self):
         # Choose who goes first
         self.current_player = self.players[0] if random.getrandbits(1) == 0 else self.players[1]
         print(f"{str(self.current_player)} goes first!")
         print(self)
         self.prompt_move()
+
 
     def prompt_move(self):
         self._switch_player()
@@ -166,7 +168,7 @@ class Game():
         destination_i: the position index of the location in question. 
 
     Returns:
-        int or char or None: destination_index as int if valid, char 'b' if move would result in bearingoff, None if invalid
+        int or char or None: destination_index as int if valid, char 'b' if move will result in bearingoff, None if invalid
     """
     def _get_destination(self, destination_i):
         #If player can bearoff
