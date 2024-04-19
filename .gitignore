@@ -2,3 +2,6 @@ __pycache__/
 .vscode/
 .venv/
 venv/
+envs/__pycache__
+
+backgammon_env.egg-info
