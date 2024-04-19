@@ -6,13 +6,6 @@ from colors import BLACK, WHITE, DARK_RED, LIGHT_GREEN, LIGHT_BROWN
 from game import Game
 import pygame
 
-from torchrl.envs.libs.gym import GymEnv
-from torchrl.envs.utils import check_env_specs, ExplorationType, set_exploration_type
-from torchrl.modules import ProbabilisticActor, TanhNormal, ValueOperator
-from torchrl.objectives import ClipPPOLoss
-from torchrl.objectives.value import GAE
-from tqdm import tqdm
-
 # Set constants
 config = configparser.ConfigParser()
 config.read('env/envs/config.ini')
@@ -33,32 +26,90 @@ class BackgammonEnv(gym.Env):
     ## Observation Space
     {
     0: p1 bar (positive int)
-    1-24: number of checkers at each location. (p1 postivie, p2 negative)
+    1-24: number of checkers at each location. (p1 positive, p2 negative)
     25: p2 bar (negative int)
-    26: d value (int)
-    27: d value (int or None)
-    28: d value (int or None)
-    29  d value (int or None)
+    26: dice1 value (int)
+    27: dice2 value (int or None)
+    28: dice3 value (int or None)
+    29  dice4 value (int or None)
     }
+
+    ## Starting Space
     """
     metadata = {"render_modes": ["human"], "render_fps": FPS}
 
-    def __init__(self, render_mode=None):
-        self.render_mode = 'human'
-        self.screen = None
-        self.clock = None
+    def __init__(self, p1="ai", p2="ai", render_mode=None,):
+        # Game props
+        self.p1 = p1
+        self.p2 = p2
+        self.game = Game(p1, p2)
         
+
+        self.observation_space = spaces.Dict(
+            {
+                'bar_p2': spaces.Discrete(16),
+                'spot_1': spaces.Discrete(16),
+                'spot_2': spaces.Discrete(16),
+                'spot_3': spaces.Discrete(16),
+                'spot_4': spaces.Discrete(16),
+                'spot_5': spaces.Discrete(16),
+                'spot_6': spaces.Discrete(16),
+                'spot_7': spaces.Discrete(16),
+                'spot_8': spaces.Discrete(16),
+                'spot_9': spaces.Discrete(16),
+                'spot_10': spaces.Discrete(16),
+                'spot_12': spaces.Discrete(16),
+                'spot_13': spaces.Discrete(16),
+                'spot_14': spaces.Discrete(16),
+                'spot_15': spaces.Discrete(16),
+                'spot_16': spaces.Discrete(16),
+                'spot_17': spaces.Discrete(16),
+                'spot_18': spaces.Discrete(16),
+                'spot_19': spaces.Discrete(16),
+                'spot_20': spaces.Discrete(16),
+                'spot_21': spaces.Discrete(16),
+                'spot_22': spaces.Discrete(16),
+                'spot_23': spaces.Discrete(16),
+                'spot_24': spaces.Discrete(16),
+                'bar_p1': spaces.Discrete(16),
+                'dice_1': spaces.Discrete(7),
+                'dice_2': spaces.Discrete(7),
+                'dice_3': spaces.Discrete(7),
+                'dice_4': spaces.Discrete(7),
+            }
+        )
+        self.action_space = spaces.Dict({
+            'origin': spaces.Discrete(25), #24 spots plus player's bar
+            'destination': spaces.Discrete(25), #24 spots plus player's goal
+            }
+        )
+
         if self.render_mode == 'human':
             pygame.init()
 
-    def step(self):
-        raise NotImplemented
+
+    def step(self, action):
+        # Ensure/assert action is correctly formatted
+
+        # Apply action on game
+
+        # Get return values 
+        observation = self._get_obs()
+        reward = self._reward_function()
+        terminated = self._end_check()
+        info = self._get_info()
+
+        # TODO: rendering goes here
+
+        return observation, reward, terminated, False, info
     
     def reset(self):
-        raise NotImplemented
+        self.game.start_new_game()
     
     def close(self):
         raise NotImplemented
+
+
 
         
 #Test 

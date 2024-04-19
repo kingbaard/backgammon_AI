@@ -77,11 +77,10 @@ class Game():
             self.prompt_move()
     
 
-    def _start_game(self):
+    def start_new_game(self):
         # Choose who goes first
         self.current_player = self.players[0] if random.getrandbits(1) == 0 else self.players[1]
-        print(f"{str(self.current_player)} goes first!")
-        print(self)
+        self._reset_board()
         self.prompt_move()
 
 
