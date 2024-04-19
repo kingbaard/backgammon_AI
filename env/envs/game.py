@@ -5,8 +5,10 @@ from position import Position
 from player import Player
 
 class Game():
-    def __init__(self):
-        self.players = [Player(0, 25), Player(1, 0)] 
+    def __init__(self, p1_type, p2_type, print_output=False):
+        self.print_output = print_output
+        
+        self.players = [Player(0, 0, p1_type), Player(1, 25, p2_type)] 
         self.current_player = None
         self.board = self._reset_board()
         self.dice = []
@@ -14,7 +16,7 @@ class Game():
 
     def __str__(self):
             if not self.board:
-                return "Board not yet initilized"
+                return "Board not yet initialized"
 
             # Visual representation of the board
             board_str = ""
@@ -27,7 +29,7 @@ class Game():
                 board_str += f"{str(i).zfill(2):^5} "
             board_str += "\n"
 
-            # Populate player affilication with location
+            # Populate player affiliation with location
             for i in range(13, 25):
                 location = self.board[i]
                 if location.player:
@@ -74,29 +76,46 @@ class Game():
 
     def run_game(self):
         while True:
-            self.prompt_move()
+            self._prompt_move()
     
 
     def start_new_game(self):
         # Choose who goes first
         self.current_player = self.players[0] if random.getrandbits(1) == 0 else self.players[1]
-        self._reset_board()
-        self.prompt_move()
 
 
-    def prompt_move(self):
+    def _prompt_move(self):
+        if self.print_output:
+            print(f"Current Player: {self.current_player}")
+            print(self)
+        if self.current_player.type == 'human':
+            self.prompt_move_user()
+        else:
+            self.prompt_move_ai()
+
+
+    def prompt_move_user(self):
         self._switch_player()
-        print(self)
-        print(f"Current Player: {self.current_player}")
+        if self.print_output:
+            print(self)
+            print(f"Current Player: {self.current_player}")
         dice = self._roll_dice()
         while dice:
-            print(f"dice: {dice}")
             possible_moves = self._get_possible_moves(self.current_player, dice)
-            print(f"possible_moves: {possible_moves}")
+            if self.print_output:
+                print(f"dice: {dice}")
+                print(f"possible_moves: {possible_moves}")
+            if len(possible_moves) == 0:
+                print("No possible moves!")
+                return
             input_move = input('Enter move:  ')
             move = tuple(map(int, re.findall(r'\d+', input_move)))
             dice.remove(abs(move[0] - move[1]))
             self._move_piece(move)
+
+
+    def prompt_move_ai(self):
+        pass
 
 
     def _reset_board(self):
@@ -119,17 +138,22 @@ class Game():
         origins = set() # set of board position index ints
         
         # Find origins
-        for pos in self.board:
-            if pos.player == player:
-                origins.add(pos.id)
+        if self.board[player.bar_i].piece_count > 0:
+            origins.add(player.bar_i) # If player has any checkers on their bar, that is the only origin
+        else:
+            origins.update([pos.id for pos in self.board if pos.player == player and pos.piece_count > 0])
+            # for pos in self.board:
+            #     if pos.player == player:
+            #         origins.add(pos.id)
 
         # Find possible destinations
         dir = 1 if player.id == 0 else -1
-        for pos in origins:
-            for dist in self.possible_distances(dice):
-                dest = pos + (dist * dir)
-                if self._get_destination(dest):
-                    legal_moves.add((pos, dest))
+        for origin in origins:
+            legal_moves.update([(origin, origin + (dist * dir)) for dist in self.possible_distances(dice) if self._get_destination(origin + (dist * dir))])
+            # for dist in self.possible_distances(dice):
+            #     dest = pos + (dist * dir)
+            #     if self._get_destination(dest):
+            #         legal_moves.add((pos, dest))
 
         return legal_moves
 
@@ -167,10 +191,10 @@ class Game():
         destination_i: the position index of the location in question. 
 
     Returns:
-        int or char or None: destination_index as int if valid, char 'b' if move will result in bearingoff, None if invalid
+        int or char or None: destination_index as int if valid, char 'b' if move will result in bearing off, None if invalid
     """
     def _get_destination(self, destination_i):
-        #If player can bearoff
+        #If player can bear off
         if self.current_player.can_bear:
             if self.current_player.id == 0 and destination_i > 24:
                 return 'b'
@@ -231,5 +255,5 @@ class Game():
         return dists
     
 # test
-game = Game()
+game = Game('human', 'human', True)
 game.run_game()
