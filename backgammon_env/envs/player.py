@@ -7,4 +7,4 @@ class Player:
         self.type = type
 
     def __str__(self):
-        return f"Player {self.id + 1}"
+        return f"Player {self.id}"
