@@ -18,7 +18,7 @@ class ExpectiMiniMax:
                     game.dice = [die1, die2]
 
                 val += probability * self.move_search(game, depth)
-        
+
         return val / 36
 
     def move_search(self, game: Game, depth: int):
@@ -29,7 +29,7 @@ class ExpectiMiniMax:
         if not possible_moves:
             return (-self.roll_search(game, depth-1), [])
 
-        # TODO: don't search different permutations of the same moves
+        # TODO: don't search different permutations of the same set of moves
         for move in possible_moves:
             new_game = deepcopy(game)
             new_game._move_piece(move)
@@ -41,7 +41,7 @@ class ExpectiMiniMax:
                 # next player's turn; negate result to keep current player's point of view
                 val = -self.roll_search(game, depth-1)
                 moves = [move]
-            
+
             if best_val == None or val > best_val:
                 best_val = val
                 best_moves = moves
