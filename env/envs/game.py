@@ -1,5 +1,4 @@
 import random
-import re
 
 from position import Position
 from player import Player
@@ -75,7 +74,7 @@ class Game():
     
 
     def run_game(self):
-        while True:
+        while self.players[0].goal < 15 and self.players[1].goal < 15:
             self._prompt_move()
     
 
@@ -84,18 +83,17 @@ class Game():
         self.current_player = self.players[0] if random.getrandbits(1) == 0 else self.players[1]
 
 
+    #def _prompt_move(self):
+    #    if self.print_output:
+    #        print(f"Current Player: {self.current_player}")
+    #        print(self)
+    #    if self.current_player.type == 'human':
+    #        self.prompt_move_user()
+    #    else:
+    #        self.prompt_move_ai()
+
+
     def _prompt_move(self):
-        if self.print_output:
-            print(f"Current Player: {self.current_player}")
-            print(self)
-        if self.current_player.type == 'human':
-            self.prompt_move_user()
-        else:
-            self.prompt_move_ai()
-
-
-    def prompt_move_user(self):
-        self._switch_player()
         if self.print_output:
             print(self)
             print(f"Current Player: {self.current_player}")
@@ -104,18 +102,24 @@ class Game():
             possible_moves = self._get_possible_moves(self.current_player, dice)
             if self.print_output:
                 print(f"dice: {dice}")
-                print(f"possible_moves: {possible_moves}")
+                print(f"possible_moves: {sorted(possible_moves, key=lambda m: (m[0], 0 if m[1] == 'b' else m[1]))}")
             if len(possible_moves) == 0:
                 print("No possible moves!")
-                return
-            input_move = input('Enter move:  ')
-            move = tuple(map(int, re.findall(r'\d+', input_move)))
-            dice.remove(abs(move[0] - move[1]))
-            self._move_piece(move)
+                break
 
+            moves = self.current_player.get_move(self, possible_moves)
+            for move in moves:
+                assert move in possible_moves
+                if move[1] != 'b':
+                    dice.remove(abs(move[0] - move[1]))
+                else:
+                    dist = abs(move[0] - self.current_player.bear_loc)
+                    die = min(d for d in dice if d >= dist)
+                    dice.remove(die)
 
-    def prompt_move_ai(self):
-        pass
+                self._move_piece(move)
+
+        self._switch_player()
 
 
     def _reset_board(self):
@@ -149,11 +153,11 @@ class Game():
         # Find possible destinations
         dir = 1 if player.id == 0 else -1
         for origin in origins:
-            legal_moves.update([(origin, origin + (dist * dir)) for dist in self.possible_distances(dice) if self._get_destination(origin + (dist * dir))])
-            # for dist in self.possible_distances(dice):
-            #     dest = pos + (dist * dir)
-            #     if self._get_destination(dest):
-            #         legal_moves.add((pos, dest))
+            #legal_moves.update([(origin, origin + (dist * dir)) for dist in self.possible_distances(dice) if self._get_destination(origin + (dist * dir))])
+            for dist in self.possible_distances(dice):
+                dest = self._get_destination(origin, dist, dir)
+                if dest != None:
+                    legal_moves.add((origin, dest))
 
         return legal_moves
 
@@ -167,7 +171,7 @@ class Game():
 
         # Check if bearing tile
         if move[1] == 'b':
-            assert self.current_player.can_bear
+            #assert game._can_bear(self.current_player)
             self.current_player.goal += 1
             return
 
@@ -193,19 +197,20 @@ class Game():
     Returns:
         int or char or None: destination_index as int if valid, char 'b' if move will result in bearing off, None if invalid
     """
-    def _get_destination(self, destination_i):
+    def _get_destination(self, origin, dist, dir):
+        destination_i = origin + (dist * dir)
         #If player can bear off
-        if self.current_player.can_bear:
-            if self.current_player.id == 0 and destination_i > 24:
+        max_bear = game._can_bear(self.current_player)
+        if max_bear:
+            if destination_i == self.current_player.bear_loc:
                 return 'b'
-            elif self.current_player.id == 1 and destination_i < 0:
+            elif dist > max_bear and origin + (max_bear * dir) == self.current_player.bear_loc:
                 return 'b'
         
         # Invalid if out of bounds
-        if not 0 <= destination_i < 24:
+        if not 0 < destination_i <= 24:
             return None
         
-        # 
         elif self.board[destination_i].player in [None, self.current_player]:
             return destination_i
         if self.board[destination_i].player != self.current_player:
@@ -214,11 +219,15 @@ class Game():
         return None
 
     def _can_bear(self, player):
+        max_dist = 0
         pieces = [p for p in self.board if p.player == player]
         for p in pieces:
-            if abs(player.bear_loc - p.id) > 6:
+            dist = abs(player.bear_loc - p.id)
+            if dist > 6:
                 return False
-        return True
+            else:
+                max_dist = max(max_dist, dist)
+        return max_dist
     
     def _switch_player(self):
         new_id = self.current_player.id^1
