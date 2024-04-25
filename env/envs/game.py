@@ -6,7 +6,7 @@ from player import Player
 class Game():
     def __init__(self, p1_type, p2_type, print_output=False):
         self.print_output = print_output
-        
+
         self.players = [Player(0, 0, p1_type), Player(1, 25, p2_type)] 
         self.current_player = None
         self.board = self._reset_board()
@@ -70,6 +70,10 @@ class Game():
             board_str += f"P1 Bar: {'X'*self.board[0].piece_count}\n"
             board_str += f"P2 Bar: {'O'*self.board[25].piece_count}\n"
 
+            # Progress
+            board_str += f"P1 Progress: {self.players[0].progress}\n"
+            board_str += f"P2 Progress: {self.players[1].progress}\n"
+
             return board_str
     
 
@@ -97,11 +101,11 @@ class Game():
         if self.print_output:
             print(self)
             print(f"Current Player: {self.current_player}")
-        dice = self._roll_dice()
-        while dice:
-            possible_moves = self._get_possible_moves(self.current_player, dice)
+        self._roll_dice()
+        while self.dice:
+            possible_moves = self._get_possible_moves(self.current_player, self.dice)
             if self.print_output:
-                print(f"dice: {dice}")
+                print(f"dice: {self.dice}")
                 print(f"possible_moves: {sorted(possible_moves, key=lambda m: (m[0], 0 if m[1] == 'b' else m[1]))}")
             if len(possible_moves) == 0:
                 print("No possible moves!")
@@ -109,14 +113,6 @@ class Game():
 
             moves = self.current_player.get_move(self, possible_moves)
             for move in moves:
-                assert move in possible_moves
-                if move[1] != 'b':
-                    dice.remove(abs(move[0] - move[1]))
-                else:
-                    dist = abs(move[0] - self.current_player.bear_loc)
-                    die = min(d for d in dice if d >= dist)
-                    dice.remove(die)
-
                 self._move_piece(move)
 
         self._switch_player()
@@ -154,7 +150,7 @@ class Game():
         dir = 1 if player.id == 0 else -1
         for origin in origins:
             #legal_moves.update([(origin, origin + (dist * dir)) for dist in self.possible_distances(dice) if self._get_destination(origin + (dist * dir))])
-            for dist in self.possible_distances(dice):
+            for dist in self.possible_distances(self.dice):
                 dest = self._get_destination(origin, dist, dir)
                 if dest != None:
                     legal_moves.add((origin, dest))
@@ -163,6 +159,17 @@ class Game():
 
 
     def _move_piece(self, move):
+        assert move in self._get_possible_moves(self.current_player, self.dice)
+
+        if move[1] != 'b':
+            self.dice.remove(abs(move[0] - move[1]))
+            self.current_player.progress += abs(move[0] - move[1])
+        else:
+            dist = abs(move[0] - self.current_player.bear_loc)
+            die = min(d for d in self.dice if d >= dist)
+            self.dice.remove(die)
+            self.current_player.progress += dist
+
         origin = self.board[move[0]]
         #Decrement origin
         origin.piece_count -= 1
@@ -180,6 +187,7 @@ class Game():
         if destination.player:
             if destination.player.id == self.current_player.id^1:
                 assert destination.piece_count == 1
+                destination.player.progress -= abs(move[1] - destination.player.bar_i)
                 self.board[destination.player.bar_i].piece_count += 1
                 destination.player = self.current_player
                 return
@@ -200,7 +208,7 @@ class Game():
     def _get_destination(self, origin, dist, dir):
         destination_i = origin + (dist * dir)
         #If player can bear off
-        max_bear = game._can_bear(self.current_player)
+        max_bear = self._can_bear(self.current_player)
         if max_bear:
             if destination_i == self.current_player.bear_loc:
                 return 'b'
@@ -240,7 +248,8 @@ class Game():
         if dice[0] == dice[1]:
             dice.append(dice[0])
             dice.append(dice[0])
-        return dice
+
+        self.dice = dice
     
     def _win_check(self):
         if self.players[self.current_player].goal >= 15:
@@ -264,5 +273,5 @@ class Game():
         return dists
     
 # test
-game = Game('human', 'human', True)
-game.run_game()
+#game = Game('human', 'human', True)
+#game.run_game()
