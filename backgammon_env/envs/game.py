@@ -13,12 +13,12 @@ class Game():
         self.print_output = print_output
         
         self.players = [Player(0, 0, p1_type), Player(1, 25, p2_type)]
-        self.turn = 0
-        self.legal_moves = {}
+        self.win_status = None
         self.current_player = None
         self.board = self._reset_board()
+        self.turn = 0
+        self.legal_moves = {}
         self.dice = []
-        self.win_status = None
         self.start_new_game()
         self.switch_board = True 
 
@@ -77,10 +77,10 @@ class Game():
 
             # Divider
             board_str += "\n" + "-" * 76 + "\n"
-            board_str += f"P1 Bar: {'X'*self.board[0].piece_count}\n"
-            board_str += f"P2 Bar: {'O'*self.board[25].piece_count}\n"
-            board_str += f"P1 Off: {self.players[0].goal}\n"
-            board_str += f"P2 Off: {self.players[1].goal}\n"
+            board_str += f"P0 Bar: {'X'*self.board[0].piece_count}\n"
+            board_str += f"P1 Bar: {'O'*self.board[25].piece_count}\n"
+            board_str += f"P0 Off: {self.players[0].goal}\n"
+            board_str += f"P1 Off: {self.players[1].goal}\n"
             board_str += f"Dice: {self.dice}"
 
             return board_str
@@ -88,14 +88,16 @@ class Game():
     def run_game(self):
         while True:
             self._handle_moves()
-    
 
     def start_new_game(self):
         # Choose who goes first
-        # self.current_player = self.players[0] if random.getrandbits(1) == 0 else self.players[1]
+        self.players = [Player(0, 0, "ai"), Player(1, 25, "ai")]
+        self.current_player = self.players[0] if random.getrandbits(1) == 0 else self.players[1]
+        self.win_status = None
+        self.turn = 0
+        self.board = self._reset_board()
         self.current_player = self.players[0]
         self._roll_dice()
-
 
     def _handle_moves(self):
         if self.print_output:
@@ -108,7 +110,7 @@ class Game():
             else:
                 self.ready_board_ai(self.current_player.id)
         else:
-            self._end_turn()
+            self.end_turn()
 
     def prompt_move_user(self):
         # self._switch_player()
@@ -118,11 +120,11 @@ class Game():
         self.dice = self._roll_dice()
         while self.dice:
             self.legal_moves = self.get_possible_moves(self.current_player.id)
-            print(f"dice: {self.dice}")
+            # print(f"dice: {self.dice}")
             if self.print_output:
                 print(f"possible_moves: {self.legal_moves}")
             if len(self.legal_moves) == 0:
-                print("No possible moves!")
+                # print("No possible moves!")
                 return
             input_move = input('Enter move:  ')
             move = tuple(map(int, re.findall(r'\d+', input_move)))
@@ -130,20 +132,33 @@ class Game():
             self._move_piece(move)
 
     def ready_board_ai(self, player_id):
+        self.win_check()
+        # print(type(player_id))
         self.legal_moves = self.get_possible_moves(player_id) if int(player_id) == self.current_player.id else set()
         if len(self.legal_moves) == 0:
-            print("No possible moves! End of Turn!")
+            # print("No possible moves! End of Turn!")
             if player_id == self.current_player.id:
-                self._end_turn()
+                self.end_turn()
             return
+        
+    def _end_turn_check(self, agent):
+        if agent != self.current_player.id:
+            return True
+        self.legal_moves = self.get_possible_moves(agent) if int(agent) == self.current_player.id else set()
+        if len(self.legal_moves) == 0:
+            return True
+        if not self.dice:
+            return True
+        return False
 
     def process_move_ai(self, move):
+        self.turn += 1
         if move in self.legal_moves:
             self._clear_used_die(move)
             self._move_piece(move)
             if not self.dice:
-                self._end_turn()
-            # self.win_check()
+                self.end_turn()
+            self.win_check()
             return True
         else:
             self._switch_player()
@@ -152,23 +167,13 @@ class Game():
             self.win_check()
             return False
         
-    def _end_turn(self):
+    def end_turn(self):
         self._switch_player()
         self._roll_dice()
         self.turn += 1
 
     def _reset_board(self):
         board = [Position(i) for i in range(26)]
-        # board[0] = Position(0, 25, self.players[1], 0)
-        # board[1] = Position(1, 24, self.players[0], 2)
-        # board[6] = Position(6, 19, self.players[1], 5)
-        # board[8] = Position(8, 17, self.players[1], 3)
-        # board[12] = Position(12, 13, self.players[0], 5)
-        # board[13] = Position(13, 12, self.players[1], 5)
-        # board[17] = Position(17, 8, self.players[0], 3)
-        # board[19] = Position(19, 6, self.players[0], 5)
-        # board[24] = Position(24, 1, self.players[1], 2)
-        # board[25] = Position(25, 0, self.players[0], 0)
         board[0] = Position(0, self.players[1], 0)
         board[1] = Position(1, self.players[0], 2)
         board[6] = Position(6, self.players[1], 5)
@@ -185,7 +190,7 @@ class Game():
         self._can_bear_check(player_id)
         legal_moves = set() # set of (origin, destination) tuples 
         origins = set() # set of board position index ints
-        player = self.players[player_id]
+        player = self.players[int(player_id)]
         # Find origins
         if self.board[self.current_player.bar_i].piece_count > 0:
             origins.add(player.bar_i) # If player has any checkers on their bar, that is the only origin
@@ -196,7 +201,7 @@ class Game():
                 origins.remove(0)
             if 25 in origins:
                 origins.remove(25)
-            print(f"observed origins: {origins}")
+            # print(f"observed origins: {origins}")
 
         # Find possible destinations
         dir = 1 if self.current_player.id == 0 else -1 
@@ -331,9 +336,13 @@ class Game():
         return new_board
     
     def win_check(self):
-        if self.players[self.current_player.id].goal >= 15:
-            self.win_status = self.current_player.id
-            return self.win_status
+        if self.players[0].goal >= 15 and self.players[1].goal >= 15:
+            self.win_status = 2
+        elif self.players[0].goal >= 15:
+            self.win_status = 0
+        elif self.players[1].goal >= 15:
+            self.win_status = 1
+        return self.win_status
 
     @staticmethod
     def possible_distances(dice):
