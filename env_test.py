@@ -1,6 +1,6 @@
 from backgammon_env import backgammon_env_v0
 import numpy as np
-env = backgammon_env_v0.BackgammonEnv(render_mode="none")
+env = backgammon_env_v0.env(render_mode="none")
 env.reset()
 
 for agent in env.agent_iter():
@@ -13,7 +13,8 @@ for agent in env.agent_iter():
     # print(dict(observation))
     if observation:
         mask = observation["action_mask"]
-    action = env.action_space(agent).sample(mask)
+        action = env.action_space(agent).sample(mask)
+    # action = env.action_space(agent).sample()
     env.step(action)
     print("\n" + str(env.game))
     print(f"rewards: {env.rewards}")

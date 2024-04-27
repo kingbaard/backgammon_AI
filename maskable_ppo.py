@@ -1,6 +1,9 @@
 import glob
 import os
 import time
+from bayes_opt import BayesianOptimization
+from bayes_opt.logger import JSONLogger
+from random import random
 
 from sb3_contrib import MaskablePPO
 from sb3_contrib.common.envs import InvalidActionEnvDiscrete
@@ -49,8 +52,8 @@ def train(env_fn, steps=10_000, seed=0, **env_kwargs):
     model = MaskablePPO(
         MaskableActorCriticPolicy,
         env,
-        learning_rate=2e-4,
-        gamma=0.99, 
+        learning_rate=3e-4,
+        gamma=0.90, 
         clip_range=0.2,
         batch_size=64,
         verbose=3,
@@ -73,7 +76,7 @@ def train(env_fn, steps=10_000, seed=0, **env_kwargs):
     del model # remove to demonstrate saving and loading
 
 def eval_action_mask(env_fn, num_games=500, render_mode = None, **env_kwargs):
-    env = env_fn(render_mode=render_mode, **env_kwargs)
+    env = env_fn(**env_kwargs)
 
     try:
         latest_policy = max(
@@ -90,8 +93,7 @@ def eval_action_mask(env_fn, num_games=500, render_mode = None, **env_kwargs):
     round_rewards = []
 
     for i in range(num_games):
-        print(f"Game #{i} Start")
-        env.reset(seed=1)
+        env.reset(seed=i)
         env.action_space(env.possible_agents[0]).seed(i)
 
         for agent in env.agent_iter():
@@ -105,19 +107,20 @@ def eval_action_mask(env_fn, num_games=500, render_mode = None, **env_kwargs):
                 scores[winner] += env._cumulative_rewards[
                     winner
                 ]  # only tracks the largest reward (winner of game)
-                for a in env.possible_agents:
-                    total_rewards[a] += env._cumulative_rewards[a]
+                for a in env.possible_agents and env._cumulative_rewards:
+                    if a in env._cumulative_rewards.keys():
+                        total_rewards[a] += env._cumulative_rewards[a]
                 round_rewards.append(env._cumulative_rewards)
                 break
             else:
                 if agent == env.possible_agents[0]:
+                    action = env.action_space(agent).sample(action_mask)
+                else:
                     action = int(
                         model.predict(
                             observation, action_masks=action_mask, deterministic=True
                         )[0]
                     )
-                else:
-                    action = env.action_space(agent).sample(action_mask)
                 env.step(action)
             env.close
 
@@ -126,15 +129,52 @@ def eval_action_mask(env_fn, num_games=500, render_mode = None, **env_kwargs):
         winrate = 0
     else:
         winrate = scores[env.possible_agents[1]] / sum(scores.values())
-    print("Rewards by round: ", round_rewards)
-    print("Total rewards (incl. negative rewards): ", total_rewards)
-    print("Winrate: ", winrate)
-    print("Final scores: ", scores)
-    return round_rewards, total_rewards, winrate, scores
+    return winrate
+
+def train_and_evaluate(eta, gamma, clip_range, batch_size):
+    # Cast batch_size to int
+    batch_size = int(batch_size)
+
+    env = backgammon_env_v0.env()
+    env = ActionMaskWrapper(env)
+    env.reset(seed=random())
+    env = ActionMasker(env, mask_fn)
+
+    model = MaskablePPO(
+        MaskableActorCriticPolicy,
+        env,
+        learning_rate=eta,
+        gamma=gamma, 
+        clip_range=clip_range,
+        batch_size=batch_size,
+        verbose=0,
+        tensorboard_log="./maskable_ppo_tensorboard/",
+        device='cuda')
+    
+    model.learn(total_timesteps=5_000)
+
+    return eval_action_mask(env_fn, 100)
+
+pbounds = {
+    'eta': (1e-4, 1e-3),
+    'gamma': (0.9, 0.99),
+    'clip_range': (0.1, 0.3),
+    'batch_size': (40, 80)
+}
+
+bae_optimizer = BayesianOptimization(
+    f=train_and_evaluate,
+    pbounds=pbounds,
+    random_state=1,
+)
 
 if __name__ == '__main__':
     env_fn = backgammon_env_v0.env
-    env_kwargs = {"render_mode": "stdout"}
+    env_kwargs = {}
 
-    train(env_fn, steps=350_000, seed=420, **env_kwargs)
-    eval_action_mask(env_fn, num_games=50, render_mode=None, **env_kwargs)
+    # train(env_fn, steps=350_000, seed=420, **env_kwargs)
+    # eval_action_mask(env_fn, num_games=50, render_mode=None, **env_kwargs)
+    bae_optimizer.maximize(
+        init_points=5,
+        n_iter=25
+    )

@@ -284,13 +284,7 @@ class raw_env(AECEnv):
         Dict: the observation as it would appear with board indexes flipped.
     """
     def _translate_p1_observation(self, old_array):
-        # assert len(old_dict) > 2, 'This function accepts the observations only'
-        # Switch bar space indexes 
-        # TODO: find more elegant way of doing this
-        # new_dict = copy(old_dict)
         new_array = copy(old_array)
-        # new_dict['bar_p1'] = old_dict['bar_p2']
-        # new_dict['bar_p2'] = old_dict['bar_p1']
 
         for i in range(30):
             # if i >=1 and i <=24:
@@ -310,7 +304,6 @@ class raw_env(AECEnv):
 
     def _end_check(self, is_valid):
         if self.game.win_status or self.game.turn >= 300 or not is_valid:
-            # print(f"is_valid: {is_valid}")
             return True
         return False
     
