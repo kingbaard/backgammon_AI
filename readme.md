@@ -6,3 +6,5 @@
 - Run `pip install -r requirements.txt`
 - Run `pip install -e backgammon_env`
 - Run `python PPO.py`
+
+Whenever training is being performed, its progress can be seen using the Tensorboard web interface. Access it by running ` tensorboard --logdir maskable_ppo_tensorboad`, and navigating to `http://localhost:6006`.

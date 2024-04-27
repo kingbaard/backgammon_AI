@@ -4,5 +4,7 @@ __pycache__/
 venv/
 backgammon_env/envs/__pycache__
 backgammon_env/__pycache__
-
 backgammon_env.egg-info
+output_models/
+
+baye_opt_log.json

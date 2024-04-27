@@ -1,12 +1,9 @@
 import glob
 import os
 import time
-from bayes_opt import BayesianOptimization
-from bayes_opt.logger import JSONLogger
 from random import random
 
 from sb3_contrib import MaskablePPO
-from sb3_contrib.common.envs import InvalidActionEnvDiscrete
 from sb3_contrib.common.maskable.evaluation import evaluate_policy
 from sb3_contrib.common.maskable.utils import get_action_masks
 # This is a drop-in replacement for EvalCallback
@@ -43,7 +40,7 @@ class ActionMaskWrapper(pettingzoo.utils.BaseWrapper):
 def mask_fn(env):
     return env.action_mask()
     
-def train(env_fn, steps=10_000, seed=0, **env_kwargs):
+def train_masked_ppo(env_fn, steps=10_000, seed=0, **env_kwargs):
     env = env_fn(**env_kwargs)
     env = ActionMaskWrapper(env)
     env.reset(seed=seed)
@@ -52,8 +49,8 @@ def train(env_fn, steps=10_000, seed=0, **env_kwargs):
     model = MaskablePPO(
         MaskableActorCriticPolicy,
         env,
-        learning_rate=3e-4,
-        gamma=0.90, 
+        learning_rate=3e-3,
+        gamma=0.99, 
         clip_range=0.2,
         batch_size=64,
         verbose=3,
@@ -75,7 +72,7 @@ def train(env_fn, steps=10_000, seed=0, **env_kwargs):
     model.save("ppo_mask")
     del model # remove to demonstrate saving and loading
 
-def eval_action_mask(env_fn, num_games=500, render_mode = None, **env_kwargs):
+def eval_masked_ppo(env_fn, num_games=500, render_mode = None, **env_kwargs):
     env = env_fn(**env_kwargs)
 
     try:
@@ -131,50 +128,10 @@ def eval_action_mask(env_fn, num_games=500, render_mode = None, **env_kwargs):
         winrate = scores[env.possible_agents[1]] / sum(scores.values())
     return winrate
 
-def train_and_evaluate(eta, gamma, clip_range, batch_size):
-    # Cast batch_size to int
-    batch_size = int(batch_size)
-
-    env = backgammon_env_v0.env()
-    env = ActionMaskWrapper(env)
-    env.reset(seed=random())
-    env = ActionMasker(env, mask_fn)
-
-    model = MaskablePPO(
-        MaskableActorCriticPolicy,
-        env,
-        learning_rate=eta,
-        gamma=gamma, 
-        clip_range=clip_range,
-        batch_size=batch_size,
-        verbose=0,
-        tensorboard_log="./maskable_ppo_tensorboard/",
-        device='cuda')
-    
-    model.learn(total_timesteps=5_000)
-
-    return eval_action_mask(env_fn, 100)
-
-pbounds = {
-    'eta': (1e-4, 1e-3),
-    'gamma': (0.9, 0.99),
-    'clip_range': (0.1, 0.3),
-    'batch_size': (40, 80)
-}
-
-bae_optimizer = BayesianOptimization(
-    f=train_and_evaluate,
-    pbounds=pbounds,
-    random_state=1,
-)
-
 if __name__ == '__main__':
     env_fn = backgammon_env_v0.env
     env_kwargs = {}
+    train_masked_ppo(env_fn, 35_000, **env_kwargs)
+    winrate = eval_masked_ppo(env_fn, 100)
 
-    # train(env_fn, steps=350_000, seed=420, **env_kwargs)
-    # eval_action_mask(env_fn, num_games=50, render_mode=None, **env_kwargs)
-    bae_optimizer.maximize(
-        init_points=5,
-        n_iter=25
-    )
+    print(winrate)
