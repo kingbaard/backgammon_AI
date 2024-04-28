@@ -49,7 +49,7 @@ def train_masked_ppo(env_fn, steps=10_000, seed=0, **env_kwargs):
     model = MaskablePPO(
         MaskableActorCriticPolicy,
         env,
-        learning_rate=3e-3,
+        learning_rate=3e-4,
         gamma=0.99, 
         clip_range=0.2,
         batch_size=64,
@@ -101,9 +101,7 @@ def eval_masked_ppo(env_fn, num_games=500, render_mode = None, **env_kwargs):
                 if env.win_status not in [0, 1]:
                     break
                 winner = env.game.win_status
-                scores[winner] += env._cumulative_rewards[
-                    winner
-                ]  # only tracks the largest reward (winner of game)
+                scores[winner] += 1
                 for a in env.possible_agents and env._cumulative_rewards:
                     if a in env._cumulative_rewards.keys():
                         total_rewards[a] += env._cumulative_rewards[a]
@@ -131,7 +129,7 @@ def eval_masked_ppo(env_fn, num_games=500, render_mode = None, **env_kwargs):
 if __name__ == '__main__':
     env_fn = backgammon_env_v0.env
     env_kwargs = {}
-    train_masked_ppo(env_fn, 35_000, **env_kwargs)
-    winrate = eval_masked_ppo(env_fn, 100)
+    # train_masked_ppo(env_fn, 10_000, **env_kwargs)
+    winrate = eval_masked_ppo(env_fn, 500)
 
     print(winrate)
