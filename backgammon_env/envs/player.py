@@ -30,3 +30,9 @@ class Player:
         else:
             return self.type.get_move(game, possible_moves)
 
+        self.goal = 0
+        self.can_bear = False
+        self.type = type
+
+    def __str__(self):
+        return f"Player {self.id}"
