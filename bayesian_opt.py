@@ -2,14 +2,34 @@ from bayes_opt import BayesianOptimization
 from bayes_opt.logger import JSONLogger
 from bayes_opt.event import Events
 from random import random
-
+from PPO import train_model, evaluate_against_random
 from maskable_ppo import train_masked_ppo, eval_masked_ppo, ActionMaskWrapper, mask_fn
 from sb3_contrib import MaskablePPO
 from backgammon_env import backgammon_env_v0
+from backgammon_gym_env import backgammon_gym_env_v0
 from sb3_contrib.common.wrappers import ActionMasker
 from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
 
-def train_and_evaluate(eta, gamma, clip_range, batch_size):
+def train_and_evaluate_no_mask(eta, gamma, clip_range, batch_size):
+    # Cast batch_size to int
+    batch_size = int(batch_size)
+    model = MaskablePPO(
+        MaskableActorCriticPolicy,
+        backgammon_gym_env_v0.BackgammonGymEnv(),
+        learning_rate=eta,
+        gamma=gamma, 
+        clip_range=clip_range,
+        batch_size=batch_size,
+        verbose=0,
+        tensorboard_log="./maskable_ppo_tensorboard/",
+        device='cuda')
+    
+    model.learn(total_timesteps=2_000)
+
+    return eval_masked_ppo(env_fn, 500)
+
+
+def train_and_evaluate_mask(eta, gamma, clip_range, batch_size):
     # Cast batch_size to int
     batch_size = int(batch_size)
 
@@ -56,5 +76,3 @@ if __name__ == '__main__':
         init_points=5,
         n_iter=30
     )
-
-    print(bae_optimizer.max)

@@ -101,6 +101,7 @@ def eval_masked_ppo(env_fn, num_games=500, render_mode = None, **env_kwargs):
                 if env.win_status not in [0, 1]:
                     break
                 winner = env.game.win_status
+                # print(env.game)
                 scores[winner] += 1
                 for a in env.possible_agents and env._cumulative_rewards:
                     if a in env._cumulative_rewards.keys():
@@ -129,7 +130,7 @@ def eval_masked_ppo(env_fn, num_games=500, render_mode = None, **env_kwargs):
 if __name__ == '__main__':
     env_fn = backgammon_env_v0.env
     env_kwargs = {}
-    # train_masked_ppo(env_fn, 10_000, **env_kwargs)
+    train_masked_ppo(env_fn, 50_000, **env_kwargs)
     winrate = eval_masked_ppo(env_fn, 500)
 
     print(winrate)
