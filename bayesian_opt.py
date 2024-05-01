@@ -9,6 +9,11 @@ from backgammon_env import backgammon_env_v0
 from backgammon_gym_env import backgammon_gym_env_v0
 from sb3_contrib.common.wrappers import ActionMasker
 from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
+from maskable_ppo import train_masked_ppo, eval_masked_ppo, ActionMaskWrapper, mask_fn
+from sb3_contrib.common.maskable.evaluation import evaluate_policy as mask_eval
+from PPO import evaluate_against_random as no_mask_eval
+
+
 
 def train_and_evaluate_no_mask(eta, gamma, clip_range, batch_size):
     # Cast batch_size to int
@@ -26,7 +31,7 @@ def train_and_evaluate_no_mask(eta, gamma, clip_range, batch_size):
     
     model.learn(total_timesteps=2_000)
 
-    return eval_masked_ppo(env_fn, 500)
+    return no_mask_eval(env_fn, 500)
 
 
 def train_and_evaluate_mask(eta, gamma, clip_range, batch_size):
@@ -53,18 +58,28 @@ def train_and_evaluate_mask(eta, gamma, clip_range, batch_size):
 
     return eval_masked_ppo(env_fn, 500)
 
-pbounds = {
+default_pbounds = {
     'eta': (75e-5, 25e-4),
     'gamma': (0.93, 0.97),
     'clip_range': (0.05, 0.15),
     'batch_size': (50, 80)
 }
 
-bae_optimizer = BayesianOptimization(
+
+def run_bayesian_optimization(env, 
+                              pbounds= {
+                                'eta': (75e-5, 25e-4),
+                                'gamma': (0.93, 0.97),
+                                'clip_range': (0.05, 0.15),
+                                'batch_size': (50, 80)
+                            }):
+    eval_fnc = train_and_evaluate_mask if env.metadata["name"] == "backgammon_env" else train_and_evaluate_no_mask
+    bae_optimizer = BayesianOptimization(
     f=train_and_evaluate,
     pbounds=pbounds,
     random_state=1,
-)
+    )
+
 
 if __name__ == '__main__':
     env_fn = backgammon_env_v0.env

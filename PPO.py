@@ -11,48 +11,71 @@ from pettingzoo.utils.conversions import aec_to_parallel
 import gymnasium as gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
 from backgammon_gym_env.envs.backgammon_gym_env import BackgammonGymEnv
 from random import randint
 
 # Parallel environments
-env = BackgammonGymEnv()
-# vec_env = make_vec_env(env, n_envs=4)
 
-def train_model():
+def make_env(rank, seed=0):
+    """
+    Utility function for multiprocessed env.
+
+    :param env_id: (str) the environment ID
+    :param seed: (int) the inital seed for RNG
+    :param rank: (int) index of the subprocess
+    """
+
+    def _init():
+        env = BackgammonGymEnv(render_mode=None, legal_only_opponent=False, random_board=True)
+        # vec_env = make_vec_env(BackgammonGymEnv)
+        # vec_env.seed(seed+rank)
+        # vec_env.reset()
+        return env
+
+    return _init
+
+def train_model(envs):
     model = PPO("MlpPolicy", 
-                env, 
+                envs, 
                 batch_size=128,
-                tensorboard_log="./no_mask_ppo_tensorboard/",
+                n_steps=2048,
+                learning_rate=1e-4,
+                tensorboard_log="./no_mask_ppo_tensorboard3/",
                 verbose=1,
                 device='cuda',
                 )
-    model.learn(total_timesteps=200_000)
-    model.save(f"no_mask_ouput_models/{env.unwrapped.metadata.get('name')}_{time.strftime('%Y%m%d-%H%M%S')}")
+    model.learn(total_timesteps=500_000)
+    model.save(f"no_mask_ouput_models/{'backgammon_gym'}_{time.strftime('%Y%m%d-%H%M%S')}")
 
 def evaluate_against_random(num_games):
-    env = BackgammonGymEnv(None, True)
+    env = BackgammonGymEnv(render_mode=None, legal_only_opponent=False, random_board=True)
     policy = max(
         glob.glob(f"no_mask_ouput_models/{env.metadata['name']}*.zip"), key=os.path.getctime
     )
     model = PPO.load(policy)
-    wins = [0, 0]
+    wins = [0, 0, 0]
     total_rewards = 0
     round_rewards = []
     termination = truncation = False
     for _ in range(num_games):
         observation, info = env.reset()
         for turn in range(1_000):
+            observation = env.observe()
             action = int(
                 model.predict(
                     observation, deterministic=True
                 )[0]
             )
-            env.reset(seed=1)
+            if turn == 9_999:
+                print(env.game)
             if termination or truncation:
                 winner = env.game.win_status
-                wins[winner] += 1
+                if winner:
+                    wins[winner] += 1
                 round_rewards.append(reward)
                 total_rewards += reward
+                env.reset(seed=1)
                 break
 
             observation, reward, termination, truncation, info = env.step(action)
@@ -64,5 +87,7 @@ def evaluate_against_random(num_games):
     return winrate, total_rewards, round_rewards
    
 if __name__ == "__main__":
-    train_model()
-    print(evaluate_against_random(500))
+    # envs = SubprocVecEnv([make_env(i, i) for i in range(4)], "spawn")
+    envs = BackgammonGymEnv(render_mode=None, legal_only_opponent=False, random_board=True)
+    train_model(envs)
+    print(evaluate_against_random(50))

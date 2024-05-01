@@ -1,5 +1,19 @@
 # Backgammon AI
 
+This primary objective of this project is to create and evaluate computer Backgammon opponents. The current algorithms used in the project scpoe are PPO, Masked_PPO and Expectminimax.
+
+## How to Play Backgammon Against AI
+
+Execute the following command: `python main.py -play <opponent type>`
+
+### Available Opponent Types
+
+-Random: will simpily play a random legal move
+-PPO_Masked: policy trained using masked PPO self-play
+-PPO: policy trained against random opponent
+-ExpectMiniMax: will determine next move via the excpectminimax algorithm
+-Human: Play hotseat multiplayer
+
 ## How to Run RL Implementation
 
 - Set your interpreter/environment to be Python version 3.11 or lower
