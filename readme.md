@@ -1,6 +1,6 @@
 # Backgammon AI
 
-This primary objective of this project is to create and evaluate computer Backgammon opponents. The current algorithms used in the project scpoe are a variety of PPO implemenations, Montecarlo Tree Search, and Expectminimax.
+This primary objective of this project is to create and evaluate computer Backgammon opponents. The current algorithms used in the project scpoe are a variety of PPO implemenations, Montecarlo Tree Search, and Expectminimax. PPO model hyperparameters are tuned via a grid search followed by bayesian optimization.
 
 ## Setup
 
