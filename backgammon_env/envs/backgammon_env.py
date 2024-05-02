@@ -103,11 +103,9 @@ class raw_env(AECEnv):
         return self._action_spaces[agent]
 
     def step(self, action):
-        # TODO: rendering 
         if self.render_mode == "human":
             self.render()
         elif self.render_mode == "stout":
-        # else:
             print(f"Current Turn: {self.current_turn}")
             print("\n"+ str(self.game) +"\n")
         
@@ -129,7 +127,7 @@ class raw_env(AECEnv):
             self._accumulate_rewards()
             # print(f"\nP0 Rewards: {self._cumulative_rewards[0]}\nP1 Rewards: {self._cumulative_rewards[1]}\n")
 
-        if self.win_status in [1, 0, 2]:
+        if self.game.win_status in [1, 0, 2]:
             self.terminations[agent] = True
             self.agent_selection = self._agent_selector.next()
             return 
@@ -310,7 +308,7 @@ class raw_env(AECEnv):
     def _calculate_reward(self):
         rewards = {0: 0, 1:0}
         
-        # Reward blocking strategy (+0.1 for every consecutive fortified position this turn
+        # Reward blocking strategy (+2 for every consecutive point in longest fortified position), +2 for each fortified position longer than 2 points
         for p in rewards.keys():
             longest_block = 0
             current_block = 0
@@ -322,6 +320,8 @@ class raw_env(AECEnv):
                     if position.player.id == p and position.piece_count > 1 and position.index not in [0, 25]:
                         current_block += 1
                     else:
+                        if current_block > 2:
+                            rewards[p] += 2
                         current_block = 0
                     if current_block > longest_block:
                         longest_block = current_block

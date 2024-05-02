@@ -4,7 +4,7 @@ from sb3_contrib import MaskablePPO
 from sb3_contrib.common.maskable.evaluation import evaluate_policy as mask_eval
 from sb3_contrib.common.maskable.policies import MaskableActorCriticPolicy
 from sb3_contrib.common.wrappers import ActionMasker
-from maskable_ppo import train_masked_ppo, eval_masked_ppo, ActionMaskWrapper, mask_fn
+from maskable_ppo_selfplay import train_masked_ppo, eval_masked_ppo, ActionMaskWrapper, mask_fn
 from stable_baselines3 import PPO
 
 from PPO import evaluate_against_random as no_mask_eval
@@ -13,7 +13,7 @@ from backgammon_gym_env import backgammon_gym_env_v0
 
 import itertools
 
-def grid_search(env_fn, hyperparams, steps=10_000, num_eval_episodes=20, **env_kwargs):
+def grid_search(env_fn, hyperparams, steps=1_000, num_eval_episodes=5, **env_kwargs):
     # Unpack hyperparameters
     learning_rates = hyperparams['learning_rate']
     gammas = hyperparams['gamma']
@@ -40,7 +40,7 @@ def grid_search(env_fn, hyperparams, steps=10_000, num_eval_episodes=20, **env_k
                 clip_range=clip_range,
                 batch_size=batch_size,
                 verbose=0,
-                tensorboard_log="./grid_search_results/",
+                tensorboard_log="./grid_search_results_no_mask/",
                 device='cuda'
             )
         
@@ -58,7 +58,7 @@ def grid_search(env_fn, hyperparams, steps=10_000, num_eval_episodes=20, **env_k
                 clip_range=clip_range,
                 batch_size=batch_size,
                 verbose=0,
-                tensorboard_log="./grid_search_results/",
+                tensorboard_log="./grid_search_results_mask/",
                 device='cuda'
             )
         
