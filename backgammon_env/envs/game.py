@@ -11,12 +11,11 @@ from copy import deepcopy
 class Game():
     def __init__(self, p1_type, p2_type, print_output=False):
         self.print_output = print_output
-        
-        self.players = [Player(0, 0, p1_type), Player(1, 25, p2_type)]
-        self.win_status = None
+
+        self.players = [Player(0, 0, p1_type), Player(1, 25, p2_type)] 
         self.current_player = None
         self.board = self._reset_board()
-        self.turn = 0
+        self.dice = []
         self.legal_moves = {}
         self.dice = []
         self.start_new_game()
@@ -26,7 +25,6 @@ class Game():
             if not self.board:
                 return "Board not yet initialized"
 
-            # Visual representation of the board
             board_str = ""
 
             board_str += f"Current Player: {self.current_player}"
@@ -361,8 +359,3 @@ class Game():
             #         dists.add(dice[0] * v)
             return dists
         return None
-    
-#test
-# game = Game("human", "human", True)
-# game.start_new_game()
-# game.run_game()
