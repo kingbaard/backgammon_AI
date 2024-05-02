@@ -13,29 +13,35 @@ from sb3_contrib.common.wrappers import ActionMasker
 
 import pettingzoo.utils
 
-from backgammon_gym_env import backgammon_gym_env_v0
+from backgammon_env import backgammon_env_v0
 
-class ActionMaskWrapper(pettingzoo.utils.BaseWrapper):
+class PettingZooMaskWrapper(pettingzoo.utils.BaseWrapper):
     def reset(self, seed=None, options= None):
         super().reset(seed, options)
+        self.observation_space = super().observation_space(self.possible_agents[0])["observation"]
+        self.action_space = super().action_space(self.possible_agents[0])
 
+        return self.observe(self.agent_selection), {}
+    
     def step(self, action):
         super().step(action)
         return super().last()
     
-    def observe(self):
+    def observe(self, agent):
         """Return only raw observation, removing action mask."""
-        return super().observe()
+        return super().observe(agent)["observation"]
 
     def action_mask(self):
         """Separate function used in order to access the action mask."""
-        return super().get_action_mask()
+        return super().observe(self.agent_selection)["action_mask"]
     
 def mask_fn(env):
-    return env.get_action_mask()
+    return env.action_mask()
     
 def train_masked_ppo(env_fn, steps=10_000, seed=0, **env_kwargs):
     env = env_fn(**env_kwargs)
+    env = PettingZooMaskWrapper(env)
+    env.reset(seed=seed)
     env = ActionMasker(env, mask_fn)
 
     model = MaskablePPO(
@@ -48,7 +54,6 @@ def train_masked_ppo(env_fn, steps=10_000, seed=0, **env_kwargs):
         verbose=3,
         tensorboard_log="output/maskable_ppo_tensorboard/",
         device='cuda')
-    
     model.set_random_seed(seed)
     try:
         model.learn(total_timesteps=steps)
@@ -65,7 +70,7 @@ def train_masked_ppo(env_fn, steps=10_000, seed=0, **env_kwargs):
     model.save("ppo_mask")
     del model # remove to demonstrate saving and loading
 
-def eval_masked_ppo_pz(env_fn, num_games=500, render_mode = None, **env_kwargs):
+def eval_masked_ppo(env_fn, num_games=500, render_mode = None, **env_kwargs):
     env = env_fn(**env_kwargs)
 
     try:
@@ -121,49 +126,10 @@ def eval_masked_ppo_pz(env_fn, num_games=500, render_mode = None, **env_kwargs):
         winrate = wins[env.possible_agents[1]] / sum(wins.values())
     return winrate
 
-# TODO: move to seperate utils or eval file
-def evaluate_against_random(num_games):
-    env = backgammon_gym_env_v0.BackgammonGymEnv(render_mode=None, legal_only_opponent=False, random_board=False)
-    policy = max(
-        glob.glob(f"output_models/{env.metadata['name']}*.zip"), key=os.path.getctime
-    )
-    model = MaskablePPO.load(policy)
-    wins = [0, 0, 0]
-    total_rewards = 0
-    round_rewards = []
-    for game_i in range(num_games):
-        observation, info = env.reset(seed=game_i)
-        termination = truncation = False
-        for turn in range(1000):
-            if termination or truncation:
-                winner = env.game.win_status
-                if winner:
-                    print(env.game)
-                    wins[winner] += 1
-                round_rewards.append(reward)
-                total_rewards += reward
-                break
-
-            observation = env.observe()
-            action = int(
-                model.predict(
-                    observation, deterministic=True
-                )[0]
-            )
-            print(f"player 0 action: {env._unflatten_action(action)}")
-            observation, reward, termination, truncation, info = env.step(action)
-    env.close
-    del model 
-    winrate = 0
-    if sum(wins) != 0:
-        winrate = wins[0] / sum(wins)
-    return wins, winrate
-
 if __name__ == '__main__':
-    env_fn = backgammon_gym_env_v0.BackgammonGymEnv
-    env_kwargs = {}
+    env_fn = backgammon_env_v0.env
+    # env_kwargs = {}
     # train_masked_ppo(env_fn, 500_000, **env_kwargs)
-    # winrate = eval_masked_ppo(env_fn, 500)
-    wins, winrate = evaluate_against_random(10)
+    winrate = eval_masked_ppo(env_fn, 500)
 
     print(winrate)
