@@ -15,7 +15,7 @@ import pettingzoo.utils
 
 from backgammon_env import backgammon_env_v0
 
-class ActionMaskWrapper(pettingzoo.utils.BaseWrapper):
+class PettingZooMaskWrapper(pettingzoo.utils.BaseWrapper):
     def reset(self, seed=None, options= None):
         super().reset(seed, options)
         self.observation_space = super().observation_space(self.possible_agents[0])["observation"]
@@ -40,7 +40,7 @@ def mask_fn(env):
     
 def train_masked_ppo(env_fn, steps=10_000, seed=0, **env_kwargs):
     env = env_fn(**env_kwargs)
-    env = ActionMaskWrapper(env)
+    env = PettingZooMaskWrapper(env)
     env.reset(seed=seed)
     env = ActionMasker(env, mask_fn)
 

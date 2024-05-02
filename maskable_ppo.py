@@ -36,8 +36,6 @@ def mask_fn(env):
     
 def train_masked_ppo(env_fn, steps=10_000, seed=0, **env_kwargs):
     env = env_fn(**env_kwargs)
-    # env = ActionMaskWrapper(env)
-    # env.reset(seed=seed)
     env = ActionMasker(env, mask_fn)
 
     model = MaskablePPO(
@@ -50,6 +48,7 @@ def train_masked_ppo(env_fn, steps=10_000, seed=0, **env_kwargs):
         verbose=3,
         tensorboard_log="output/maskable_ppo_tensorboard/",
         device='cuda')
+    
     model.set_random_seed(seed)
     try:
         model.learn(total_timesteps=steps)

@@ -1,4 +1,20 @@
 import glob
+import math
+import os
+
+class MonteCarloSearchTreeNode:
+    def __init__(self, game, move=None, parent=None):
+        self.game = game
+        self.move = move
+        self.parent = parent
+        self.children = []
+        self.visits = 0
+        self.wins = 0
+
+    def ucb1(self, exploration_weight=1.41):
+        if self.visits == 0:
+            return float('inf')
+        return (self.wins / self.visits) + exploration_weight * math.sqrt(math.log(self.parent.visits) / self.visits)
 
 def evaluate_against_random(num_games, env_fn, **kwargs):
     env = env_fn(**kwargs)

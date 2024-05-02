@@ -33,3 +33,13 @@ Execute the following command: `python main.py -p0 <opponent type> -p1 <opponent
 
 Tensorboad logging will be written to `logs/`. Access it by running `tensorboard --logdir logs/`, and navigating to `http://localhost:6006` in a web browser.
 
+## Valid Policy types
+
+- **mask**
+- **no_mask**
+- **mask_selfplay**
+
+## Todo
+
+- Proper evaluation/comparison
+- Graphic rendering (currently only ascii)

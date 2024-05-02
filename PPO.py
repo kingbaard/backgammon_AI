@@ -45,6 +45,7 @@ def train_model(envs):
                 verbose=1,
                 device='cuda',
                 )
+    
     model.learn(total_timesteps=500_000)
     model.save(f"no_mask_ouput_models/{'backgammon_gym'}_{time.strftime('%Y%m%d-%H%M%S')}")
 
@@ -85,7 +86,7 @@ def evaluate_against_random(num_games):
     winrate = 0
     if sum(wins) != 0:
         winrate = wins[0] / sum(wins)
-    return wins, winrate
+    return total_rewards/num_games
    
 if __name__ == "__main__":
     # envs = SubprocVecEnv([make_env(i, i) for i in range(4)], "spawn")
