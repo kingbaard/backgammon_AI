@@ -10,17 +10,17 @@ def train(train_params):
         case "mask":
             ppo_obj = PPO
             sb3_policy = "MlpPolicy"
-            env = backgammon_gym_env_v0(None, True, True)
+            env = backgammon_gym_env_v0.BackgammonGymEnv(None, True, True)
             eval_fn = None
         case "no_mask":
             ppo_obj = PPO
             sb3_policy = "MlpPolicy"
-            env = backgammon_gym_env_v0(None, False, True)
+            env = backgammon_gym_env_v0.BackgammonGymEnv(None, False, True)
             eval_fn = None
         case "mask_selfplay":
             ppo_obj = MaskablePPO
             sb3_policy = MaskableActorCriticPolicy
-            env = backgammon_env_v0()
+            env = backgammon_env_v0.env()
             eval_fn = None
 
     model = ppo_obj(sb3_policy, 
@@ -33,6 +33,6 @@ def train(train_params):
                 device='cuda',
                 )
     
-    model.learn()
+    model.learn(5000)
 
     model.save(f"final_policies/{train_params['output_name']}")

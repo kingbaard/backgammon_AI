@@ -1,0 +1,45 @@
+{
+    "reward": {
+        "win": 100,
+        "lose": 100,
+        "bearOffAttempt" : 2,
+        "bearOffSuccess" : 5,
+        "valid_origin": 1,
+        "valid_destination": -1,
+        "opponent_bar_count": 2,
+        "block_piece_count": 2,
+        "block_count": 1
+    },
+    "punishment": {
+        "invalid_origin": -1,
+        "invalidMove_destination": -1,
+        "origin_gt_destinatoin": -2,
+        "self_bar_count": 2
+    },
+    "policy": {
+        "type": "mask"
+    },
+    "grid_search": {
+        "steps": 50,
+        "eval_episodes": 5,
+        "learning_rate": [1e-3],
+        "gamma":  [0.99],
+        "clip_range": [0.1],
+        "batch_size": [32]
+    },
+    "bayesian_optimization": {
+        "initial_iterations": 3,
+        "tuning_iterations": 10,
+        "learning_rate_v": 0.0002,
+        "gamma_v": 0.05,
+        "clip_range_v": 0.05,
+        "batch_size_v": 20
+    },
+    "train": {
+        "output_name": "test1",
+        "policy_type": "mask",
+        "batch_size": 64,
+        "n_steps": 2048,
+        "learning_rate": 1e-4
+    }
+}
