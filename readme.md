@@ -1,6 +1,6 @@
 # Backgammon AI
 
-This primary objective of this project is to create and evaluate computer Backgammon opponents. The current algorithms used in the project scpoe are a variety of PPO implemenations, Montecarlo Tree Search, and Expectminimax.
+This primary objective of this project is to create and evaluate computer Backgammon opponents. The current algorithms used in the project scpoe are a variety of PPO implemenations, Montecarlo Tree Search, and Expectminimax. PPO model hyperparameters are tuned via a grid search followed by bayesian optimization.
 
 ## Setup
 
@@ -9,11 +9,9 @@ This primary objective of this project is to create and evaluate computer Backga
 
 ## How to Play Backgammon Against AI
 
-Execute the following command: `python main.py -p1 <opponent type>`
+Execute the following command: `python main.py human <opponent type>`
 
-## How to Observe AI Play Against Eachother
-
-Execute the following command: `python main.py -p0 <opponent type> -p1 <opponent type>`
+You can also watch two AI agents play against eachother using: `python main.py <player 1 type> <player 2 type>`
 
 ## Available Opponent Types
 
@@ -22,14 +20,14 @@ Execute the following command: `python main.py -p0 <opponent type> -p1 <opponent
 - **ppo:** policy trained against random opponent
 - **expectminimax:** will determine next move via the excpectminimax algorithm
 - **treesearch:** will determine next move via the Monte Carlo Tree Search algorithm
-- **human:** Play hotseat multiplayer
+- **human:** Control the next move by entering it in, using the format "<origin>, <destination>"
 
 ## How to Create Your own backgammon PPO Policy
 
 1. Edit the config.json file to your liking.
-2. Execute the following command to run hyperparameter tuning:  `python main.py -tune <model name>`
+2. Execute the following command to run hyperparameter tuning: `python main.py -tune <model name>`
 3. Update the config.json file accordingly
-4. Execute the following command to train and save to the policy folder:  `python main.py -create <model name>`
+4. Execute the following command to train and save to the policy folder: `python main.py -create <model name>`
 
 Tensorboad logging will be written to `logs/`. Access it by running `tensorboard --logdir logs/`, and navigating to `http://localhost:6006` in a web browser.
 
