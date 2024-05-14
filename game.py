@@ -1,8 +1,8 @@
 import random
 import re
 
-from backgammon_env.envs.player import Player
-from backgammon_env.envs.position import Position 
+from player import Player
+from position import Position 
 
 from copy import deepcopy
 
